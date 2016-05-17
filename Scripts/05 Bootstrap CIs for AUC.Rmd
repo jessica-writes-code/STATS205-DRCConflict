@@ -55,9 +55,12 @@ calc.auc <- function(dataforauc) {
 }
 
 ## Function to Perform Boostrap
+B <- 2000
 bootstrap.auc <- function(event.type="all", estimates) {
   auclist <- c()
-  for (i in 1:1000) {
+  set.seed(205)
+  for (i in 1:B) {
+    print(i)
     # Subset data, if necessary
     if (event.type =="B") {
       acled.drc2015 <- subset(acled.drc2015, event_type_std=="Battle")
@@ -84,9 +87,14 @@ bootstrap.auc <- function(event.type="all", estimates) {
     new.auc <- calc.auc(surv.data)
     auclist <- c(auclist,new.auc)
   }
-  lb <- quantile(auclist, probs = .025)
-  avg <- mean(auclist)
-  ub <- quantile(auclist, probs = .975)
+  return(auclist)
+}
+
+## Function to Calculate CI
+bs.ci <- function(listofaucs) {
+  lb <- quantile(listofaucs, probs = .01)
+  avg <- mean(listofaucs)
+  ub <- quantile(listofaucs, probs = .99)
   return(c(lb, avg, ub))
 }
 
@@ -100,15 +108,28 @@ load(file=paste0(temp,"/EstimatesAllBCV1.R"))
 load(file=paste0(temp,"/EstimatesAllNS.R"))
 
 # Bootstrap CIs
-ci.all.pi <- bootstrap.auc(event.type="all", estimates.all.pi)
-ci.all.lscv <- bootstrap.auc(event.type="all", estimates.all.lscv)
-ci.all.lscv.RN <- bootstrap.auc(event.type="all", estimates.all.lscv.RN)
-ci.all.bcv1 <- bootstrap.auc(event.type="all", estimates.all.bcv1)
-ci.all.ns <- bootstrap.auc(event.type="all", estimates.all.ns)
+bs.all.pi <- bootstrap.auc(event.type="all", estimates.all.pi)
+bs.all.lscv <- bootstrap.auc(event.type="all", estimates.all.lscv)
+bs.all.lscv.RN <- bootstrap.auc(event.type="all", estimates.all.lscv.RN)
+bs.all.bcv1 <- bootstrap.auc(event.type="all", estimates.all.bcv1)
+bs.all.ns <- bootstrap.auc(event.type="all", estimates.all.ns)
+
+ci.all.pi <- bs.ci(bs.all.pi)
+ci.all.lscv <- bs.ci(bs.all.lscv)
+ci.all.lscv.RN <- bs.ci(bs.all.lscv.RN)
+ci.all.bcv1 <- bs.ci(bs.all.bcv1)
+ci.all.ns <- bs.ci(bs.all.ns)
+
+# KW on all but LSCV
+x = c(ci.all.pi, ci.all.lscv.RN, ci.all.bcv1, ci.all.ns)
+g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
+ktest = kruskal.test(x,g)
+ktest$statistic
+ktest$p.value
 
 # Combine AUC Calculations & Save
 cis.all.combined <- rbind(ci.all.pi, ci.all.lscv, ci.all.lscv.RN, ci.all.bcv1, ci.all.ns)
-colnames(cis.all.combined) <- c("LB: 2.5%", "Average","UB: 97.5%")
+colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.all.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
 write.xlsx(cis.all.combined, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="CIs-All", col.names=TRUE, row.names=TRUE, append=TRUE)
 
@@ -121,15 +142,28 @@ load(file=paste0(temp,"/EstimatesBattlesBCV1.R"))
 load(file=paste0(temp,"/EstimatesBattlesNS.R"))
 
 # Bootstrap CIs
-ci.b.pi <- bootstrap.auc(event.type="all", estimates.b.pi)
-ci.b.lscv <- bootstrap.auc(event.type="all", estimates.b.lscv)
-ci.b.lscv.RN <- bootstrap.auc(event.type="all", estimates.b.lscv.RN)
-ci.b.bcv1 <- bootstrap.auc(event.type="all", estimates.b.bcv1)
-ci.b.ns <- bootstrap.auc(event.type="all", estimates.b.ns)
+bs.b.pi <- bootstrap.auc(event.type="B", estimates.b.pi)
+bs.b.lscv <- bootstrap.auc(event.type="B", estimates.b.lscv)
+bs.b.lscv.RN <- bootstrap.auc(event.type="B", estimates.b.lscv.RN)
+bs.b.bcv1 <- bootstrap.auc(event.type="B", estimates.b.bcv1)
+bs.b.ns <- bootstrap.auc(event.type="B", estimates.b.ns)
+
+ci.b.pi <- bs.ci(bs.b.pi)
+ci.b.lscv <- bs.ci(bs.b.lscv)
+ci.b.lscv.RN <- bs.ci(bs.b.lscv.RN)
+ci.b.bcv1 <- bs.ci(bs.b.bcv1)
+ci.b.ns <- bs.ci(bs.b.ns)
+
+# KW on all but LSCV
+x = c(ci.b.pi, ci.b.lscv.RN, ci.b.bcv1, ci.b.ns)
+g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
+ktest = kruskal.test(x,g)
+ktest$statistic
+ktest$p.value
 
 # Combine AUC Calculations & Save
 cis.b.combined <- rbind(ci.b.pi, ci.b.lscv, ci.b.lscv.RN, ci.b.bcv1, ci.b.ns)
-colnames(cis.b.combined) <- c("LB: 2.5%", "Average","UB: 97.5%")
+colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.b.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
 write.xlsx(cis.b.combined, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="CIs-Battles", col.names=TRUE, row.names=TRUE, append=TRUE)
 
@@ -142,15 +176,28 @@ load(file=paste0(temp,"/EstimatesRiotsBCV1.R"))
 load(file=paste0(temp,"/EstimatesRiotsNS.R"))
 
 # Bootstrap CIs
-ci.r.pi <- bootstrap.auc(event.type="all", estimates.r.pi)
-ci.r.lscv <- bootstrap.auc(event.type="all", estimates.r.lscv)
-ci.r.lscv.RN <- bootstrap.auc(event.type="all", estimates.r.lscv.RN)
-ci.r.bcv1 <- bootstrap.auc(event.type="all", estimates.r.bcv1)
-ci.r.ns <- bootstrap.auc(event.type="all", estimates.r.ns)
+bs.r.pi <- bootstrap.auc(event.type="R", estimates.r.pi)
+bs.r.lscv <- bootstrap.auc(event.type="R", estimates.r.lscv)
+bs.r.lscv.RN <- bootstrap.auc(event.type="R", estimates.r.lscv.RN)
+bs.r.bcv1 <- bootstrap.auc(event.type="R", estimates.r.bcv1)
+bs.r.ns <- bootstrap.auc(event.type="R", estimates.r.ns)
+
+ci.r.pi <- bs.ci(bs.r.pi)
+ci.r.lscv <- bs.ci(bs.r.lscv)
+ci.r.lscv.RN <- bs.ci(bs.r.lscv.RN)
+ci.r.bcv1 <- bs.ci(bs.r.bcv1)
+ci.r.ns <- bs.ci(bs.r.ns)
+
+# KW on all
+x = c(ci.r.pi, ci.r.lscv, ci.r.lscv.RN, ci.r.bcv1, ci.r.ns)
+g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B),rep(5,B))
+ktest = kruskal.test(x,g)
+ktest$statistic
+ktest$p.value
 
 # Combine AUC Calculations & Save
 cis.r.combined <- rbind(ci.r.pi, ci.r.lscv, ci.r.lscv.RN, ci.r.bcv1, ci.r.ns)
-colnames(cis.r.combined) <- c("LB: 2.5%", "Average","UB: 97.5%")
+colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.r.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
 write.xlsx(cis.r.combined, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="CIs-Riots", col.names=TRUE, row.names=TRUE, append=TRUE)
 
@@ -163,14 +210,27 @@ load(file=paste0(temp,"/EstimatesVACBCV1.R"))
 load(file=paste0(temp,"/EstimatesVACNS.R"))
 
 # Bootstrap CIs
-ci.v.pi <- bootstrap.auc(event.type="all", estimates.v.pi)
-ci.v.lscv <- bootstrap.auc(event.type="all", estimates.v.lscv)
-ci.v.lscv.RN <- bootstrap.auc(event.type="all", estimates.v.lscv.RN)
-ci.v.bcv1 <- bootstrap.auc(event.type="all", estimates.v.bcv1)
-ci.v.ns <- bootstrap.auc(event.type="all", estimates.v.ns)
+bs.v.pi <- bootstrap.auc(event.type="V", estimates.v.pi)
+bs.v.lscv <- bootstrap.auc(event.type="V", estimates.v.lscv)
+bs.v.lscv.RN <- bootstrap.auc(event.type="V", estimates.v.lscv.RN)
+bs.v.bcv1 <- bootstrap.auc(event.type="V", estimates.v.bcv1)
+bs.v.ns <- bootstrap.auc(event.type="V", estimates.v.ns)
+
+ci.v.pi <- bs.ci(bs.v.pi)
+ci.v.lscv <- bs.ci(bs.v.lscv)
+ci.v.lscv.RN <- bs.ci(bs.v.lscv.RN)
+ci.v.bcv1 <- bs.ci(bs.v.bcv1)
+ci.v.ns <- bs.ci(bs.v.ns)
+
+# KW on all but LSCV
+x = c(ci.v.pi, ci.v.lscv.RN, ci.v.bcv1, ci.v.ns)
+g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
+ktest = kruskal.test(x,g)
+ktest$statistic
+ktest$p.value
 
 # Combine AUC Calculations & Save
 cis.v.combined <- rbind(ci.v.pi, ci.v.lscv, ci.v.lscv.RN, ci.v.bcv1, ci.v.ns)
-colnames(cis.v.combined) <- c("LB: 2.5%", "Average","UB: 97.5%")
+colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.v.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
 write.xlsx(cis.v.combined, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="CIs-VAC", col.names=TRUE, row.names=TRUE, append=TRUE)
