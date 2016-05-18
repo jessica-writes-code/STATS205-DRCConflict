@@ -55,12 +55,20 @@ calc.auc <- function(dataforauc) {
 }
 
 ## Function to Perform Boostrap
-B <- 2000
-bootstrap.auc <- function(event.type="all", estimates) {
-  auclist <- c()
+B <- 2500
+bootstrap.auc <- function(event.type="all", est.pi, est.lscv, est.lscv.RN, est.bcv1, est.ns) {
+  ### Initialize AUC vectors for each bandwidth type
+  auc.pi <- rep(0,B)
+  auc.lscv <- rep(0,B)
+  auc.lscv.RN <- rep(0,B)
+  auc.bcv1 <- rep(0,B)
+  auc.ns <- rep(0,B)
+  
+  ### Set Seed
   set.seed(205)
+  
+  ### Bootstrap
   for (i in 1:B) {
-    print(i)
     # Subset data, if necessary
     if (event.type =="B") {
       acled.drc2015 <- subset(acled.drc2015, event_type_std=="Battle")
@@ -81,21 +89,56 @@ bootstrap.auc <- function(event.type="all", estimates) {
     points <- over(bs.samp, drcgrid)
     points.df <- as.data.frame(table(points$ID))
     names(points.df)[names(points.df)=="Var1"] <- "ID"
-  
-    # Calculate AUC
-    surv.data <- data.surveillance(points.df, estimates)
+    
+    # Calculate AUC for each bandwidth type
+    surv.data <- data.surveillance(points.df, est.pi)
     new.auc <- calc.auc(surv.data)
-    auclist <- c(auclist,new.auc)
+    auc.pi[i] <- new.auc
+    
+    surv.data <- data.surveillance(points.df, est.lscv)
+    new.auc <- calc.auc(surv.data)
+    auc.lscv[i] <- new.auc
+    
+    surv.data <- data.surveillance(points.df, est.lscv.RN)
+    new.auc <- calc.auc(surv.data)
+    auc.lscv.RN[i] <- new.auc
+    
+    surv.data <- data.surveillance(points.df, est.bcv1)
+    new.auc <- calc.auc(surv.data)
+    auc.bcv1[i] <- new.auc
+    
+    surv.data <- data.surveillance(points.df, est.ns)
+    new.auc <- calc.auc(surv.data)
+    auc.ns[i] <- new.auc
   }
-  return(auclist)
+  df <- data.frame(cbind(auc.pi, auc.lscv, auc.lscv.RN, auc.bcv1, auc.ns))
+  return(df)
 }
 
 ## Function to Calculate CI
 bs.ci <- function(listofaucs) {
-  lb <- quantile(listofaucs, probs = .01)
+  lb <- quantile(listofaucs, probs = .005)
   avg <- mean(listofaucs)
-  ub <- quantile(listofaucs, probs = .99)
+  ub <- quantile(listofaucs, probs = .995)
   return(c(lb, avg, ub))
+}
+
+## Function to do Wilcoxon on AUCs
+wilcox.auc <- function(df) {
+  val <- rep(0,10)
+  val[1] <- wilcox.test(df$auc.pi,df$auc.lscv)$p.value
+  val[2] <- wilcox.test(df$auc.pi,df$auc.lscv.RN)$p.value
+  val[3] <- wilcox.test(df$auc.pi,df$auc.lscv.bcv1)$p.value
+  val[4] <- wilcox.test(df$auc.pi,df$auc.lscv.ns)$p.value
+  
+  val[5] <- wilcox.test(df$auc.lscv,df$auc.lscv.RN)$p.value
+  val[6] <- wilcox.test(df$auc.lscv,df$auc.lscv.bcv1)$p.value
+  val[7] <- wilcox.test(df$auc.lscv,df$auc.lscv.ns)$p.value
+  
+  val[8] <- wilcox.test(df$auc.lscv.RN,df$auc.lscv.bcv1)$p.value
+  val[9] <- wilcox.test(df$auc.lscv.RN,df$auc.lscv.ns)$p.value
+  
+  val[10] <- wilcox.test(df$auc.bcv1,df$auc.lscv.ns)$p.value
 }
 
 ### AUC Calculations
@@ -108,30 +151,36 @@ load(file=paste0(temp,"/EstimatesAllBCV1.R"))
 load(file=paste0(temp,"/EstimatesAllNS.R"))
 
 # Bootstrap CIs
-bs.all.pi <- bootstrap.auc(event.type="all", estimates.all.pi)
-bs.all.lscv <- bootstrap.auc(event.type="all", estimates.all.lscv)
-bs.all.lscv.RN <- bootstrap.auc(event.type="all", estimates.all.lscv.RN)
-bs.all.bcv1 <- bootstrap.auc(event.type="all", estimates.all.bcv1)
-bs.all.ns <- bootstrap.auc(event.type="all", estimates.all.ns)
+bs.all <- bootstrap.auc(event.type="all", estimates.all.pi, estimates.all.lscv, estimates.all.lscv.RN, estimates.all.bcv1, estimates.all.ns)
 
-ci.all.pi <- bs.ci(bs.all.pi)
-ci.all.lscv <- bs.ci(bs.all.lscv)
-ci.all.lscv.RN <- bs.ci(bs.all.lscv.RN)
-ci.all.bcv1 <- bs.ci(bs.all.bcv1)
-ci.all.ns <- bs.ci(bs.all.ns)
+ci.all.pi <- bs.ci(bs.all$auc.pi)
+ci.all.lscv <- bs.ci(bs.all$auc.lscv)
+ci.all.lscv.RN <- bs.ci(bs.all$auc.lscv.RN)
+ci.all.bcv1 <- bs.ci(bs.all$auc.bcv1)
+ci.all.ns <- bs.ci(bs.all$auc.ns)
 
 # KW on all but LSCV
-x = c(ci.all.pi, ci.all.lscv.RN, ci.all.bcv1, ci.all.ns)
+x = c(bs.all$auc.pi, bs.all$auc.lscv.RN, bs.all$auc.bcv1, bs.all$auc.ns)
 g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
 ktest = kruskal.test(x,g)
 ktest$statistic
 ktest$p.value
 
+# Pairwise Comparisons
+## Wilcoxon rank-sum tests
+p <- wilcox.auc(bs.all)
+
+## Original pvalues
+p
+
+## Adjusted pvalues
+p.adjust(p, method="holm")
+
 # Combine AUC Calculations & Save
 cis.all.combined <- rbind(ci.all.pi, ci.all.lscv, ci.all.lscv.RN, ci.all.bcv1, ci.all.ns)
 colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.all.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
-write.xlsx(cis.all.combined, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="CIs-All", col.names=TRUE, row.names=TRUE, append=TRUE)
+write.xlsx(cis.all.combined, file=paste0(output,"/AUC CIs.xlsx"), sheetName="CIs-All", col.names=TRUE, row.names=TRUE, append=FALSE)
 
 ## Battles
 # Load data
@@ -142,30 +191,36 @@ load(file=paste0(temp,"/EstimatesBattlesBCV1.R"))
 load(file=paste0(temp,"/EstimatesBattlesNS.R"))
 
 # Bootstrap CIs
-bs.b.pi <- bootstrap.auc(event.type="B", estimates.b.pi)
-bs.b.lscv <- bootstrap.auc(event.type="B", estimates.b.lscv)
-bs.b.lscv.RN <- bootstrap.auc(event.type="B", estimates.b.lscv.RN)
-bs.b.bcv1 <- bootstrap.auc(event.type="B", estimates.b.bcv1)
-bs.b.ns <- bootstrap.auc(event.type="B", estimates.b.ns)
+bs.b <- bootstrap.auc(event.type="B", estimates.b.pi, estimates.b.lscv, estimates.b.lscv.RN, estimates.b.bcv1, estimates.b.ns)
 
-ci.b.pi <- bs.ci(bs.b.pi)
-ci.b.lscv <- bs.ci(bs.b.lscv)
-ci.b.lscv.RN <- bs.ci(bs.b.lscv.RN)
-ci.b.bcv1 <- bs.ci(bs.b.bcv1)
-ci.b.ns <- bs.ci(bs.b.ns)
+ci.b.pi <- bs.ci(bs.b$auc.pi)
+ci.b.lscv <- bs.ci(bs.b$auc.lscv)
+ci.b.lscv.RN <- bs.ci(bs.b$auc.lscv.RN)
+ci.b.bcv1 <- bs.ci(bs.b$auc.bcv1)
+ci.b.ns <- bs.ci(bs.b$auc.ns)
 
 # KW on all but LSCV
-x = c(ci.b.pi, ci.b.lscv.RN, ci.b.bcv1, ci.b.ns)
+x = c(bs.b$auc.pi, bs.b$auc.lscv.RN, bs.b$auc.bcv1, bs.b$auc.ns)
 g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
 ktest = kruskal.test(x,g)
 ktest$statistic
 ktest$p.value
 
+# Pairwise Comparisons
+## Wilcoxon rank-sum tests
+p <- wilcox.auc(bs.b)
+
+## Original pvalues
+p
+
+## Adjusted pvalues
+p.adjust(p, method="holm")
+
 # Combine AUC Calculations & Save
 cis.b.combined <- rbind(ci.b.pi, ci.b.lscv, ci.b.lscv.RN, ci.b.bcv1, ci.b.ns)
-colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
+colnames(cis.b.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.b.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
-write.xlsx(cis.b.combined, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="CIs-Battles", col.names=TRUE, row.names=TRUE, append=TRUE)
+write.xlsx(cis.b.combined, file=paste0(output,"/AUC CIs.xlsx"), sheetName="CIs-Battles", col.names=TRUE, row.names=TRUE, append=TRUE)
 
 ## Riots
 # Load data
@@ -176,30 +231,36 @@ load(file=paste0(temp,"/EstimatesRiotsBCV1.R"))
 load(file=paste0(temp,"/EstimatesRiotsNS.R"))
 
 # Bootstrap CIs
-bs.r.pi <- bootstrap.auc(event.type="R", estimates.r.pi)
-bs.r.lscv <- bootstrap.auc(event.type="R", estimates.r.lscv)
-bs.r.lscv.RN <- bootstrap.auc(event.type="R", estimates.r.lscv.RN)
-bs.r.bcv1 <- bootstrap.auc(event.type="R", estimates.r.bcv1)
-bs.r.ns <- bootstrap.auc(event.type="R", estimates.r.ns)
+bs.r <- bootstrap.auc(event.type="all", estimates.r.pi, estimates.r.lscv, estimates.r.lscv.RN, estimates.r.bcv1, estimates.r.ns)
 
-ci.r.pi <- bs.ci(bs.r.pi)
-ci.r.lscv <- bs.ci(bs.r.lscv)
-ci.r.lscv.RN <- bs.ci(bs.r.lscv.RN)
-ci.r.bcv1 <- bs.ci(bs.r.bcv1)
-ci.r.ns <- bs.ci(bs.r.ns)
+ci.r.pi <- bs.ci(bs.r$auc.pi)
+ci.r.lscv <- bs.ci(bs.r$auc.lscv)
+ci.r.lscv.RN <- bs.ci(bs.r$auc.lscv.RN)
+ci.r.bcv1 <- bs.ci(bs.r$auc.bcv1)
+ci.r.ns <- bs.ci(bs.r$auc.ns)
 
-# KW on all
-x = c(ci.r.pi, ci.r.lscv, ci.r.lscv.RN, ci.r.bcv1, ci.r.ns)
-g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B),rep(5,B))
+# KW on all but LSCV
+x = c(bs.r$auc.pi, bs.r$auc.lscv.RN, bs.r$auc.bcv1, bs.r$auc.ns)
+g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
 ktest = kruskal.test(x,g)
 ktest$statistic
 ktest$p.value
 
+# Pairwise Comparisons
+## Wilcoxon rank-sum tests
+p <- wilcox.auc(bs.r)
+
+## Original pvalues
+p
+
+## Adjusted pvalues
+p.adjust(p, method="holm")
+
 # Combine AUC Calculations & Save
 cis.r.combined <- rbind(ci.r.pi, ci.r.lscv, ci.r.lscv.RN, ci.r.bcv1, ci.r.ns)
-colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
+colnames(cis.r.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.r.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
-write.xlsx(cis.r.combined, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="CIs-Riots", col.names=TRUE, row.names=TRUE, append=TRUE)
+write.xlsx(cis.r.combined, file=paste0(output,"/AUC CIs.xlsx"), sheetName="CIs-Riots", col.names=TRUE, row.names=TRUE, append=TRUE)
 
 ## Violence Against Civilians
 # Load data
@@ -210,27 +271,33 @@ load(file=paste0(temp,"/EstimatesVACBCV1.R"))
 load(file=paste0(temp,"/EstimatesVACNS.R"))
 
 # Bootstrap CIs
-bs.v.pi <- bootstrap.auc(event.type="V", estimates.v.pi)
-bs.v.lscv <- bootstrap.auc(event.type="V", estimates.v.lscv)
-bs.v.lscv.RN <- bootstrap.auc(event.type="V", estimates.v.lscv.RN)
-bs.v.bcv1 <- bootstrap.auc(event.type="V", estimates.v.bcv1)
-bs.v.ns <- bootstrap.auc(event.type="V", estimates.v.ns)
+bs.v <- bootstrap.auc(event.type="all", estimates.v.pi, estimates.v.lscv, estimates.v.lscv.RN, estimates.v.bcv1, estimates.v.ns)
 
-ci.v.pi <- bs.ci(bs.v.pi)
-ci.v.lscv <- bs.ci(bs.v.lscv)
-ci.v.lscv.RN <- bs.ci(bs.v.lscv.RN)
-ci.v.bcv1 <- bs.ci(bs.v.bcv1)
-ci.v.ns <- bs.ci(bs.v.ns)
+ci.v.pi <- bs.ci(bs.v$auc.pi)
+ci.v.lscv <- bs.ci(bs.v$auc.lscv)
+ci.v.lscv.RN <- bs.ci(bs.v$auc.lscv.RN)
+ci.v.bcv1 <- bs.ci(bs.v$auc.bcv1)
+ci.v.ns <- bs.ci(bs.v$auc.ns)
 
 # KW on all but LSCV
-x = c(ci.v.pi, ci.v.lscv.RN, ci.v.bcv1, ci.v.ns)
+x = c(bs.v$auc.pi, bs.v$auc.lscv.RN, bs.v$auc.bcv1, bs.v$auc.ns)
 g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
 ktest = kruskal.test(x,g)
 ktest$statistic
 ktest$p.value
 
+# Pairwise Comparisons
+## Wilcoxon rank-sum tests
+p <- wilcox.auc(bs.v)
+
+## Original pvalues
+p
+
+## Adjusted pvalues
+p.adjust(p, method="holm")
+
 # Combine AUC Calculations & Save
 cis.v.combined <- rbind(ci.v.pi, ci.v.lscv, ci.v.lscv.RN, ci.v.bcv1, ci.v.ns)
-colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
+colnames(cis.v.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.v.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
-write.xlsx(cis.v.combined, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="CIs-VAC", col.names=TRUE, row.names=TRUE, append=TRUE)
+write.xlsx(cis.v.combined, file=paste0(output,"/AUC CIs.xlsx"), sheetName="CIs-VAC", col.names=TRUE, row.names=TRUE, append=TRUE)
