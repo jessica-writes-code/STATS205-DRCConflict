@@ -14,6 +14,10 @@ setwd('/Users/jmoore523/Dropbox/Graduate School/Q3 - Spring 2016/STATS205/Projec
 input <- file.path(".", "Input")
 output <- file.path(".", "Output")
 temp <- file.path(".", "Temp")
+log <- file.path(".", "Logs")
+
+# Start Log
+sink(paste0(log,"/05 Bootstrap CIs.txt"))
 
 # Load data
 load(file=paste0(temp,"/acleddrc.R"))
@@ -55,7 +59,7 @@ calc.auc <- function(dataforauc) {
 }
 
 ## Function to Perform Boostrap
-B <- 2500
+B <- 10000
 bootstrap.auc <- function(event.type="all", est.pi, est.lscv, est.lscv.RN, est.bcv1, est.ns) {
   ### Initialize AUC vectors for each bandwidth type
   auc.pi <- rep(0,B)
@@ -69,6 +73,7 @@ bootstrap.auc <- function(event.type="all", est.pi, est.lscv, est.lscv.RN, est.b
   
   ### Bootstrap
   for (i in 1:B) {
+    print(i)
     # Subset data, if necessary
     if (event.type =="B") {
       acled.drc2015 <- subset(acled.drc2015, event_type_std=="Battle")
@@ -116,6 +121,9 @@ bootstrap.auc <- function(event.type="all", est.pi, est.lscv, est.lscv.RN, est.b
 }
 
 ## Function to Calculate CI
+conflevel <- 0.95
+lb.conf <- (1-conflevel)/(2*10)
+ub.conf <- 1-lb.conf
 bs.ci <- function(listofaucs) {
   lb <- quantile(listofaucs, probs = .005)
   avg <- mean(listofaucs)
@@ -178,7 +186,7 @@ p.adjust(p, method="holm")
 
 # Combine AUC Calculations & Save
 cis.all.combined <- rbind(ci.all.pi, ci.all.lscv, ci.all.lscv.RN, ci.all.bcv1, ci.all.ns)
-colnames(cis.all.combined) <- c("LB: 1%", "Average","UB: 99%")
+colnames(cis.all.combined) <- c("LB", "Average","UB")
 rownames(cis.all.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
 write.xlsx(cis.all.combined, file=paste0(output,"/AUC CIs.xlsx"), sheetName="CIs-All", col.names=TRUE, row.names=TRUE, append=FALSE)
 
@@ -301,3 +309,4 @@ cis.v.combined <- rbind(ci.v.pi, ci.v.lscv, ci.v.lscv.RN, ci.v.bcv1, ci.v.ns)
 colnames(cis.v.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.v.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
 write.xlsx(cis.v.combined, file=paste0(output,"/AUC CIs.xlsx"), sheetName="CIs-VAC", col.names=TRUE, row.names=TRUE, append=TRUE)
+sink()

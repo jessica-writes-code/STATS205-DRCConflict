@@ -23,8 +23,8 @@ load(file=paste0(temp,"/drcgridcentroids.R"))
 ### Data Set-up
 ## Subset conflicts data (incl. random noise generation)
 acled.drc2014 <- subset(acled.drc, YEAR==2014)
-acled.drc2014$LATITUDE.RN <- acled.drc2014$LATITUDE + rnorm(length(acled.drc2014$LATITUDE), sd=.1)
-acled.drc2014$LONGITUDE.RN <- acled.drc2014$LONGITUDE + rnorm(length(acled.drc2014$LONGITUDE), sd=.1)
+acled.drc2014$LATITUDE.RN <- acled.drc2014$LATITUDE + runif(length(acled.drc2014$LATITUDE), max=0.1)
+acled.drc2014$LONGITUDE.RN <- acled.drc2014$LONGITUDE + runif(length(acled.drc2014$LONGITUDE), max=0.1)
 
 acled.drc2014.latlon <- as.data.frame(acled.drc2014)[,c("LATITUDE","LONGITUDE")]
 acled.drc2014.latlon.RN <- as.data.frame(acled.drc2014)[,c("LATITUDE.RN","LONGITUDE.RN")]
