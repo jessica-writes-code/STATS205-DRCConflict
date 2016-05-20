@@ -172,7 +172,7 @@ estimates.v.bcv1 <- cbind(event.dens.v.bcv1$estimate,ID)
 save(estimates.v.bcv1, file=paste0(temp,"/EstimatesVACBCV1.R"))
 
 # NS
-bandwidth.v.Hns <- Hbcv(acled.drc2014.v.latlon)
+bandwidth.v.Hns <- Hns(acled.drc2014.v.latlon)
 event.dens.v.ns <- kde(x=acled.drc2014.v.latlon, H=bandwidth.v.Hns, eval.points=drcgrid.centroids.latlon)
 estimates.v.ns <- cbind(event.dens.v.ns$estimate,ID)
 save(estimates.v.ns, file=paste0(temp,"/EstimatesVACNS.R"))

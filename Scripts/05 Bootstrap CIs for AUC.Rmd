@@ -14,10 +14,6 @@ setwd('/Users/jmoore523/Dropbox/Graduate School/Q3 - Spring 2016/STATS205/Projec
 input <- file.path(".", "Input")
 output <- file.path(".", "Output")
 temp <- file.path(".", "Temp")
-log <- file.path(".", "Logs")
-
-# Start Log
-sink(paste0(log,"/05 Bootstrap CIs.txt"))
 
 # Load data
 load(file=paste0(temp,"/acleddrc.R"))
@@ -59,8 +55,8 @@ calc.auc <- function(dataforauc) {
 }
 
 ## Function to Perform Boostrap
-B <- 10000
-bootstrap.auc <- function(event.type="all", est.pi, est.lscv, est.lscv.RN, est.bcv1, est.ns) {
+B <- 5000
+bootstrap.auc <- function(event.type, est.pi, est.lscv, est.lscv.RN, est.bcv1, est.ns) {
   ### Initialize AUC vectors for each bandwidth type
   auc.pi <- rep(0,B)
   auc.lscv <- rep(0,B)
@@ -73,7 +69,6 @@ bootstrap.auc <- function(event.type="all", est.pi, est.lscv, est.lscv.RN, est.b
   
   ### Bootstrap
   for (i in 1:B) {
-    print(i)
     # Subset data, if necessary
     if (event.type =="B") {
       acled.drc2015 <- subset(acled.drc2015, event_type_std=="Battle")
@@ -131,22 +126,23 @@ bs.ci <- function(listofaucs) {
   return(c(lb, avg, ub))
 }
 
-## Function to do Wilcoxon on AUCs
-wilcox.auc <- function(df) {
-  val <- rep(0,10)
-  val[1] <- wilcox.test(df$auc.pi,df$auc.lscv)$p.value
-  val[2] <- wilcox.test(df$auc.pi,df$auc.lscv.RN)$p.value
-  val[3] <- wilcox.test(df$auc.pi,df$auc.lscv.bcv1)$p.value
-  val[4] <- wilcox.test(df$auc.pi,df$auc.lscv.ns)$p.value
+## Function to do ttests on AUCs
+t.auc <- function(df) {
+  val <- rep(NA,10)
+  val[1] <- t.test(df$auc.pi,df$auc.lscv)$p.value
+  val[2] <- t.test(df$auc.pi,df$auc.lscv.RN)$p.value
+  val[3] <- t.test(df$auc.pi,df$auc.bcv1)$p.value
+  val[4] <- t.test(df$auc.pi,df$auc.ns)$p.value
   
-  val[5] <- wilcox.test(df$auc.lscv,df$auc.lscv.RN)$p.value
-  val[6] <- wilcox.test(df$auc.lscv,df$auc.lscv.bcv1)$p.value
-  val[7] <- wilcox.test(df$auc.lscv,df$auc.lscv.ns)$p.value
+  val[5] <- t.test(df$auc.lscv,df$auc.lscv.RN)$p.value
+  val[6] <- t.test(df$auc.lscv,df$auc.bcv1)$p.value
+  val[7] <- t.test(df$auc.lscv,df$auc.ns)$p.value
   
-  val[8] <- wilcox.test(df$auc.lscv.RN,df$auc.lscv.bcv1)$p.value
-  val[9] <- wilcox.test(df$auc.lscv.RN,df$auc.lscv.ns)$p.value
+  val[8] <- t.test(df$auc.lscv.RN,df$auc.bcv1)$p.value
+  val[9] <- t.test(df$auc.lscv.RN,df$auc.ns)$p.value
   
-  val[10] <- wilcox.test(df$auc.bcv1,df$auc.lscv.ns)$p.value
+  val[10] <- t.test(df$auc.bcv1,df$auc.ns)$p.value
+  return(val)
 }
 
 ### AUC Calculations
@@ -167,16 +163,9 @@ ci.all.lscv.RN <- bs.ci(bs.all$auc.lscv.RN)
 ci.all.bcv1 <- bs.ci(bs.all$auc.bcv1)
 ci.all.ns <- bs.ci(bs.all$auc.ns)
 
-# KW on all but LSCV
-x = c(bs.all$auc.pi, bs.all$auc.lscv.RN, bs.all$auc.bcv1, bs.all$auc.ns)
-g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
-ktest = kruskal.test(x,g)
-ktest$statistic
-ktest$p.value
-
 # Pairwise Comparisons
-## Wilcoxon rank-sum tests
-p <- wilcox.auc(bs.all)
+## Ttests
+p <- t.auc(bs.all)
 
 ## Original pvalues
 p
@@ -207,16 +196,9 @@ ci.b.lscv.RN <- bs.ci(bs.b$auc.lscv.RN)
 ci.b.bcv1 <- bs.ci(bs.b$auc.bcv1)
 ci.b.ns <- bs.ci(bs.b$auc.ns)
 
-# KW on all but LSCV
-x = c(bs.b$auc.pi, bs.b$auc.lscv.RN, bs.b$auc.bcv1, bs.b$auc.ns)
-g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
-ktest = kruskal.test(x,g)
-ktest$statistic
-ktest$p.value
-
 # Pairwise Comparisons
-## Wilcoxon rank-sum tests
-p <- wilcox.auc(bs.b)
+## Ttests
+p <- t.auc(bs.b)
 
 ## Original pvalues
 p
@@ -239,7 +221,7 @@ load(file=paste0(temp,"/EstimatesRiotsBCV1.R"))
 load(file=paste0(temp,"/EstimatesRiotsNS.R"))
 
 # Bootstrap CIs
-bs.r <- bootstrap.auc(event.type="all", estimates.r.pi, estimates.r.lscv, estimates.r.lscv.RN, estimates.r.bcv1, estimates.r.ns)
+bs.r <- bootstrap.auc(event.type="R", estimates.r.pi, estimates.r.lscv, estimates.r.lscv.RN, estimates.r.bcv1, estimates.r.ns)
 
 ci.r.pi <- bs.ci(bs.r$auc.pi)
 ci.r.lscv <- bs.ci(bs.r$auc.lscv)
@@ -247,16 +229,9 @@ ci.r.lscv.RN <- bs.ci(bs.r$auc.lscv.RN)
 ci.r.bcv1 <- bs.ci(bs.r$auc.bcv1)
 ci.r.ns <- bs.ci(bs.r$auc.ns)
 
-# KW on all but LSCV
-x = c(bs.r$auc.pi, bs.r$auc.lscv.RN, bs.r$auc.bcv1, bs.r$auc.ns)
-g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
-ktest = kruskal.test(x,g)
-ktest$statistic
-ktest$p.value
-
 # Pairwise Comparisons
-## Wilcoxon rank-sum tests
-p <- wilcox.auc(bs.r)
+## Ttests
+p <- t.auc(bs.r)
 
 ## Original pvalues
 p
@@ -279,7 +254,7 @@ load(file=paste0(temp,"/EstimatesVACBCV1.R"))
 load(file=paste0(temp,"/EstimatesVACNS.R"))
 
 # Bootstrap CIs
-bs.v <- bootstrap.auc(event.type="all", estimates.v.pi, estimates.v.lscv, estimates.v.lscv.RN, estimates.v.bcv1, estimates.v.ns)
+bs.v <- bootstrap.auc(event.type="V", estimates.v.pi, estimates.v.lscv, estimates.v.lscv.RN, estimates.v.bcv1, estimates.v.ns)
 
 ci.v.pi <- bs.ci(bs.v$auc.pi)
 ci.v.lscv <- bs.ci(bs.v$auc.lscv)
@@ -287,16 +262,9 @@ ci.v.lscv.RN <- bs.ci(bs.v$auc.lscv.RN)
 ci.v.bcv1 <- bs.ci(bs.v$auc.bcv1)
 ci.v.ns <- bs.ci(bs.v$auc.ns)
 
-# KW on all but LSCV
-x = c(bs.v$auc.pi, bs.v$auc.lscv.RN, bs.v$auc.bcv1, bs.v$auc.ns)
-g = c(rep(1,B),rep(2,B),rep(3,B),rep(4,B))
-ktest = kruskal.test(x,g)
-ktest$statistic
-ktest$p.value
-
 # Pairwise Comparisons
-## Wilcoxon rank-sum tests
-p <- wilcox.auc(bs.v)
+## Ttests
+p <- t.auc(bs.v)
 
 ## Original pvalues
 p
@@ -309,4 +277,3 @@ cis.v.combined <- rbind(ci.v.pi, ci.v.lscv, ci.v.lscv.RN, ci.v.bcv1, ci.v.ns)
 colnames(cis.v.combined) <- c("LB: 1%", "Average","UB: 99%")
 rownames(cis.v.combined) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
 write.xlsx(cis.v.combined, file=paste0(output,"/AUC CIs.xlsx"), sheetName="CIs-VAC", col.names=TRUE, row.names=TRUE, append=TRUE)
-sink()
