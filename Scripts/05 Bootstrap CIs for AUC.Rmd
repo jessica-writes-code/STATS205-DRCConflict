@@ -117,32 +117,14 @@ bootstrap.auc <- function(event.type, est.pi, est.lscv, est.lscv.RN, est.bcv1, e
 
 ## Function to Calculate CI
 conflevel <- 0.95
-lb.conf <- (1-conflevel)/(2*10)
+tests <- 10
+lb.conf <- (1-conflevel)/(2*tests)
 ub.conf <- 1-lb.conf
 bs.ci <- function(listofaucs) {
-  lb <- quantile(listofaucs, probs = .005)
+  lb <- quantile(listofaucs, probs = lb.conf)
   avg <- mean(listofaucs)
-  ub <- quantile(listofaucs, probs = .995)
+  ub <- quantile(listofaucs, probs = ub.conf)
   return(c(lb, avg, ub))
-}
-
-## Function to do ttests on AUCs
-t.auc <- function(df) {
-  val <- rep(NA,10)
-  val[1] <- t.test(df$auc.pi,df$auc.lscv)$p.value
-  val[2] <- t.test(df$auc.pi,df$auc.lscv.RN)$p.value
-  val[3] <- t.test(df$auc.pi,df$auc.bcv1)$p.value
-  val[4] <- t.test(df$auc.pi,df$auc.ns)$p.value
-  
-  val[5] <- t.test(df$auc.lscv,df$auc.lscv.RN)$p.value
-  val[6] <- t.test(df$auc.lscv,df$auc.bcv1)$p.value
-  val[7] <- t.test(df$auc.lscv,df$auc.ns)$p.value
-  
-  val[8] <- t.test(df$auc.lscv.RN,df$auc.bcv1)$p.value
-  val[9] <- t.test(df$auc.lscv.RN,df$auc.ns)$p.value
-  
-  val[10] <- t.test(df$auc.bcv1,df$auc.ns)$p.value
-  return(val)
 }
 
 ### AUC Calculations
@@ -162,16 +144,6 @@ ci.all.lscv <- bs.ci(bs.all$auc.lscv)
 ci.all.lscv.RN <- bs.ci(bs.all$auc.lscv.RN)
 ci.all.bcv1 <- bs.ci(bs.all$auc.bcv1)
 ci.all.ns <- bs.ci(bs.all$auc.ns)
-
-# Pairwise Comparisons
-## Ttests
-p <- t.auc(bs.all)
-
-## Original pvalues
-p
-
-## Adjusted pvalues
-p.adjust(p, method="holm")
 
 # Combine AUC Calculations & Save
 cis.all.combined <- rbind(ci.all.pi, ci.all.lscv, ci.all.lscv.RN, ci.all.bcv1, ci.all.ns)
@@ -196,16 +168,6 @@ ci.b.lscv.RN <- bs.ci(bs.b$auc.lscv.RN)
 ci.b.bcv1 <- bs.ci(bs.b$auc.bcv1)
 ci.b.ns <- bs.ci(bs.b$auc.ns)
 
-# Pairwise Comparisons
-## Ttests
-p <- t.auc(bs.b)
-
-## Original pvalues
-p
-
-## Adjusted pvalues
-p.adjust(p, method="holm")
-
 # Combine AUC Calculations & Save
 cis.b.combined <- rbind(ci.b.pi, ci.b.lscv, ci.b.lscv.RN, ci.b.bcv1, ci.b.ns)
 colnames(cis.b.combined) <- c("LB: 1%", "Average","UB: 99%")
@@ -229,16 +191,6 @@ ci.r.lscv.RN <- bs.ci(bs.r$auc.lscv.RN)
 ci.r.bcv1 <- bs.ci(bs.r$auc.bcv1)
 ci.r.ns <- bs.ci(bs.r$auc.ns)
 
-# Pairwise Comparisons
-## Ttests
-p <- t.auc(bs.r)
-
-## Original pvalues
-p
-
-## Adjusted pvalues
-p.adjust(p, method="holm")
-
 # Combine AUC Calculations & Save
 cis.r.combined <- rbind(ci.r.pi, ci.r.lscv, ci.r.lscv.RN, ci.r.bcv1, ci.r.ns)
 colnames(cis.r.combined) <- c("LB: 1%", "Average","UB: 99%")
@@ -261,16 +213,6 @@ ci.v.lscv <- bs.ci(bs.v$auc.lscv)
 ci.v.lscv.RN <- bs.ci(bs.v$auc.lscv.RN)
 ci.v.bcv1 <- bs.ci(bs.v$auc.bcv1)
 ci.v.ns <- bs.ci(bs.v$auc.ns)
-
-# Pairwise Comparisons
-## Ttests
-p <- t.auc(bs.v)
-
-## Original pvalues
-p
-
-## Adjusted pvalues
-p.adjust(p, method="holm")
 
 # Combine AUC Calculations & Save
 cis.v.combined <- rbind(ci.v.pi, ci.v.lscv, ci.v.lscv.RN, ci.v.bcv1, ci.v.ns)
