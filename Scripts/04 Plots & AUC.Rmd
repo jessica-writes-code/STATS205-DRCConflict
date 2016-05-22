@@ -93,7 +93,7 @@ plot.surveillance <- function(pi, lscv, lscv.RN, bcv, ns, name) {
   axis(2, at=c(0,.2,.4,.6,.8,1), labels=c("0%","20%","40%","60%","80%","100%"), cex.axis=1.10)
   
   # - Add Legend
-  legend(.55, .2, c("Plug-In","LSCV","LSCV w/ Random Noise","BCV","NS"), lwd=c(2,2,2,2), col=c("black","blue","red","green","orange"))
+  legend(.55, .2, c("Plug-In","LSCV","LSCV w/ Random Noise","BCV","Rule-of-Thumb"), lwd=c(2,2,2,2), col=c("black","blue","red","green","orange"))
   
   dev.off()
 }
