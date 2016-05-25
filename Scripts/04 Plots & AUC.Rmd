@@ -1,6 +1,7 @@
 ### Set up coding environment
 # Clear Data Sets & Plots
 rm(list=ls())
+set.seed(205)
 
 # Load libraries
 library(ggplot2)

@@ -199,7 +199,7 @@ plot.contours.kde <- function(data, bandwidth.matrix, name) {
   # Contour plot
   name.plot <- paste0(output,"/",name,'.png')
   png(name.plot)
-  image(y, x, cont.ests, col=terrain.colors(20), xlab="", xaxt='n', ylab="", yaxt='n')
+  image(y, x, cont.ests, col=terrain.colors(50), xlab="", xaxt='n', ylab="", yaxt='n')
   plot(drc, add=TRUE)
   dev.off()
 }
