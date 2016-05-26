@@ -14,10 +14,19 @@ input <- file.path(".", "Input")
 output <- file.path(".", "Output")
 temp <- file.path(".", "Temp")
 
+### Create/Load Important Objects
+# List Event Subsets & Labels
+eventlist <- c(".", ".b.", ".r.", ".v.")
+eventlist.names <- c("AllData", "Battles", "Riots", "VAC")
+
+# List Bandwidths & Labels
+bwlist <- c("Hpi", "Hlscv", "Hlscv.RN", "Hbcv1", "Hbcv2", "Hns")
+bwlist.names <- c("PI","LSCV","LSCVRN", "BCV1", "BCV2","NS")
+
 # Load data
+load(file=paste0(temp,"/acleddrc.R"))
 load(file=paste0(temp,"/drc.R"))
 load(file=paste0(temp,"/drcgrid.R"))
-load(file=paste0(temp,"/acleddrc.R"))
 load(file=paste0(temp,"/drcgridcentroids.R"))
 
 ### Data Set-up
@@ -52,132 +61,74 @@ names(drcgrid.centroids.latlon)[names(drcgrid.centroids.latlon)=="y"] <- "LATITU
 drcgrid.centroids.latlon <- drcgrid.centroids.latlon[,c(2,1)]
 
 ### Kernel Density Estimates
+# Create Grid Square IDs
 ID <- seq(1,length(drcgrid.centroids.latlon$LATITUDE))
-## All data
-# Plug-In
+
+## Compute Bandwidth Matrices
+# All Data
 bandwidth.Hpi <- Hpi(acled.drc2014.latlon)
-event.dens.all.pi <- kde(x=acled.drc2014.latlon, H=bandwidth.Hpi, eval.points=drcgrid.centroids.latlon)
-estimates.all.pi <- cbind(event.dens.all.pi$estimate,ID)
-save(estimates.all.pi, file=paste0(temp,"/EstimatesAllPI.R"))
-
-# LSCV
 bandwidth.Hlscv <- Hlscv(acled.drc2014.latlon)
-event.dens.all.lscv <- kde(x=acled.drc2014.latlon, H=bandwidth.Hlscv, eval.points=drcgrid.centroids.latlon)
-estimates.all.lscv <- cbind(event.dens.all.lscv$estimate,ID)
-save(estimates.all.lscv, file=paste0(temp,"/EstimatesAllLSCV.R"))
-
-# LSCV + Random Noise
 bandwidth.Hlscv.RN <- Hlscv(acled.drc2014.latlon.RN)
-event.dens.all.lscv.RN <- kde(x=acled.drc2014.latlon, H=bandwidth.Hlscv.RN, eval.points=drcgrid.centroids.latlon)
-estimates.all.lscv.RN <- cbind(event.dens.all.lscv.RN$estimate,ID)
-save(estimates.all.lscv.RN, file=paste0(temp,"/EstimatesAllLSCVRN.R"))
-
-# BCV1
 bandwidth.Hbcv1 <- Hbcv(acled.drc2014.latlon, whichbcv=1)
-event.dens.all.bcv1 <- kde(x=acled.drc2014.latlon, H=bandwidth.Hbcv1, eval.points=drcgrid.centroids.latlon)
-estimates.all.bcv1 <- cbind(event.dens.all.bcv1$estimate,ID)
-save(estimates.all.bcv1, file=paste0(temp,"/EstimatesAllBCV1.R"))
-
-# NS
+bandwidth.Hbcv2 <- Hbcv(acled.drc2014.latlon, whichbcv=2)
 bandwidth.Hns <- Hns(acled.drc2014.latlon)
-event.dens.all.ns <- kde(x=acled.drc2014.latlon, H=bandwidth.Hns, eval.points=drcgrid.centroids.latlon)
-estimates.all.ns <- cbind(event.dens.all.ns$estimate,ID)
-save(estimates.all.ns, file=paste0(temp,"/EstimatesAllNS.R"))
 
-## Battles
-# Plug-In
+# Battles
 bandwidth.b.Hpi <- Hpi(acled.drc2014.b.latlon)
-event.dens.b.pi <- kde(x=acled.drc2014.b.latlon, H=bandwidth.b.Hpi, eval.points=drcgrid.centroids.latlon)
-estimates.b.pi <- cbind(event.dens.b.pi$estimate,ID)
-save(estimates.b.pi, file=paste0(temp,"/EstimatesBattlesPI.R"))
-
-# LSCV
 bandwidth.b.Hlscv <- Hlscv(acled.drc2014.b.latlon)
-event.dens.b.lscv <- kde(x=acled.drc2014.b.latlon, H=bandwidth.b.Hlscv, eval.points=drcgrid.centroids.latlon)
-estimates.b.lscv <- cbind(event.dens.b.lscv$estimate,ID)
-save(estimates.b.lscv, file=paste0(temp,"/EstimatesBattlesLSCV.R"))
-
-# LSCV + Random Noise
 bandwidth.b.Hlscv.RN <- Hlscv(acled.drc2014.b.latlon.RN)
-event.dens.b.lscv.RN <- kde(x=acled.drc2014.b.latlon.RN, H=bandwidth.b.Hlscv.RN, eval.points=drcgrid.centroids.latlon)
-estimates.b.lscv.RN <- cbind(event.dens.b.lscv.RN$estimate,ID)
-save(estimates.b.lscv.RN, file=paste0(temp,"/EstimatesBattlesLSCVRN.R"))
-
-# BCV1
 bandwidth.b.Hbcv1 <- Hbcv(acled.drc2014.b.latlon, whichbcv=1)
-event.dens.b.bcv1 <- kde(x=acled.drc2014.b.latlon, H=bandwidth.b.Hbcv1, eval.points=drcgrid.centroids.latlon)
-estimates.b.bcv1 <- cbind(event.dens.b.bcv1$estimate,ID)
-save(estimates.b.bcv1, file=paste0(temp,"/EstimatesBattlesBCV1.R"))
-
-# NS
+bandwidth.b.Hbcv2 <- Hbcv(acled.drc2014.b.latlon, whichbcv=2)
 bandwidth.b.Hns <- Hns(acled.drc2014.b.latlon)
-event.dens.b.ns <- kde(x=acled.drc2014.b.latlon, H=bandwidth.b.Hns, eval.points=drcgrid.centroids.latlon)
-estimates.b.ns <- cbind(event.dens.b.ns$estimate,ID)
-save(estimates.b.ns, file=paste0(temp,"/EstimatesBattlesNS.R"))
 
-## Riots/Protests
-# Plug-In
+# Riots/Protests
 bandwidth.r.Hpi <- Hpi(acled.drc2014.r.latlon)
-event.dens.r.pi <- kde(x=acled.drc2014.r.latlon, H=bandwidth.r.Hpi, eval.points=drcgrid.centroids.latlon)
-estimates.r.pi <- cbind(event.dens.r.pi$estimate,ID)
-save(estimates.r.pi, file=paste0(temp,"/EstimatesRiotsPI.R"))
-
-# LSCV
 bandwidth.r.Hlscv <- Hlscv(acled.drc2014.r.latlon)
-event.dens.r.lscv <- kde(x=acled.drc2014.r.latlon, H=bandwidth.r.Hlscv, eval.points=drcgrid.centroids.latlon)
-estimates.r.lscv <- cbind(event.dens.r.lscv$estimate,ID)
-save(estimates.r.lscv, file=paste0(temp,"/EstimatesRiotsLSCV.R"))
-
-# LSCV + Random Noise
 bandwidth.r.Hlscv.RN <- Hlscv(acled.drc2014.r.latlon.RN)
-event.dens.r.lscv.RN <- kde(x=acled.drc2014.r.latlon.RN, H=bandwidth.r.Hlscv.RN, eval.points=drcgrid.centroids.latlon)
-estimates.r.lscv.RN <- cbind(event.dens.r.lscv.RN$estimate,ID)
-save(estimates.r.lscv.RN, file=paste0(temp,"/EstimatesRiotsLSCVRN.R"))
-
-# BCV1
 bandwidth.r.Hbcv1 <- Hbcv(acled.drc2014.r.latlon, whichbcv=1)
-event.dens.r.bcv1 <- kde(x=acled.drc2014.r.latlon, H=bandwidth.r.Hbcv1, eval.points=drcgrid.centroids.latlon)
-estimates.r.bcv1 <- cbind(event.dens.r.bcv1$estimate,ID)
-save(estimates.r.bcv1, file=paste0(temp,"/EstimatesRiotsBCV1.R"))
-
-# NS
+bandwidth.r.Hbcv2 <- Hbcv(acled.drc2014.r.latlon, whichbcv=2)
 bandwidth.r.Hns <- Hns(acled.drc2014.r.latlon)
-event.dens.r.ns <- kde(x=acled.drc2014.r.latlon, H=bandwidth.r.Hns, eval.points=drcgrid.centroids.latlon)
-estimates.r.ns <- cbind(event.dens.r.ns$estimate,ID)
-save(estimates.r.ns, file=paste0(temp,"/EstimatesRiotsNS.R"))
 
-## Violence Against Civilians
-# Plug-In
+# Violence Against Civilians
 bandwidth.v.Hpi <- Hpi(acled.drc2014.v.latlon)
-event.dens.v.pi <- kde(x=acled.drc2014.v.latlon, H=bandwidth.v.Hpi, eval.points=drcgrid.centroids.latlon)
-estimates.v.pi <- cbind(event.dens.v.pi$estimate,ID)
-save(estimates.v.pi, file=paste0(temp,"/EstimatesVACPI.R"))
-
-# LSCV
 bandwidth.v.Hlscv <- Hlscv(acled.drc2014.v.latlon)
-event.dens.v.lscv <- kde(x=acled.drc2014.v.latlon, H=bandwidth.v.Hlscv, eval.points=drcgrid.centroids.latlon)
-estimates.v.lscv <- cbind(event.dens.v.lscv$estimate,ID)
-save(estimates.v.lscv, file=paste0(temp,"/EstimatesVACLSCV.R"))
-
-# LSCV + Random Noise
 bandwidth.v.Hlscv.RN <- Hlscv(acled.drc2014.v.latlon.RN)
-event.dens.v.lscv.RN <- kde(x=acled.drc2014.v.latlon.RN, H=bandwidth.v.Hlscv.RN, eval.points=drcgrid.centroids.latlon)
-estimates.v.lscv.RN <- cbind(event.dens.v.lscv.RN$estimate,ID)
-save(estimates.v.lscv.RN, file=paste0(temp,"/EstimatesVACLSCVRN.R"))
-
-# BCV1
 bandwidth.v.Hbcv1 <- Hbcv(acled.drc2014.v.latlon, whichbcv=1)
-event.dens.v.bcv1 <- kde(x=acled.drc2014.v.latlon, H=bandwidth.v.Hbcv1, eval.points=drcgrid.centroids.latlon)
-estimates.v.bcv1 <- cbind(event.dens.v.bcv1$estimate,ID)
-save(estimates.v.bcv1, file=paste0(temp,"/EstimatesVACBCV1.R"))
-
-# NS
+bandwidth.v.Hbcv2 <- Hbcv(acled.drc2014.v.latlon, whichbcv=2)
 bandwidth.v.Hns <- Hns(acled.drc2014.v.latlon)
-event.dens.v.ns <- kde(x=acled.drc2014.v.latlon, H=bandwidth.v.Hns, eval.points=drcgrid.centroids.latlon)
-estimates.v.ns <- cbind(event.dens.v.ns$estimate,ID)
-save(estimates.v.ns, file=paste0(temp,"/EstimatesVACNS.R"))
+
+## Loop Through Event Subsets & Bandwidth Types
+## Generate Density Estimates by Grid ID for Each Combination
+for (j in 1:length(eventlist)) {
+  for (i in 1:length(bwlist)) {
+  
+    # Get Bandwidth Matrix
+    bwmatrix <- get(paste0("bandwidth",eventlist[j],bwlist[i]))
+  
+    # If Bandwidth is LSCV-R, Get Adjusted Data
+    # Otherwise, Get Regular Data
+    if (bwlist[i] == "Hlscv.RN") {
+      df <- get(paste0("acled.drc2014",eventlist[j],"latlon.RN"))
+    }
+    else {
+      df <- get(paste0("acled.drc2014",eventlist[j],"latlon"))
+    }   
+    
+    # Create Density Estimates for Square Centroids
+    dens <- kde(x=df, H=bwmatrix, eval.points=drcgrid.centroids.latlon)
+    
+    # Identify Estimates by Square ID
+    dens.df <- cbind(dens$estimate,ID)
+    
+    # Rename & Save Object
+    dens.name <- paste0("estimates",eventlist[j],bwlist[i])
+    assign(dens.name, dens.df)
+    save(dens.df, file=paste0(temp,"/Estimates",eventlist.names[j],bwlist[i],".R"))
+  }
+}
 
 ### Contour Plots
+## Create Matrix of Lat/Long Points to Evaluate
 x = seq(-13.37182,5.325758,length.out = 100)
 y = seq(12.26322,31.25227,length.out = 100)
 temp <- c()
@@ -189,9 +140,10 @@ xymatrix <- xymatrix[,c(2,1)]
 names(xymatrix)[1] <- "LATITUDE"
 names(xymatrix)[2] <- "LONGITUDE"
 
-## Function for contour plotting
+## Function for Contour Plotting
 par(mar=c(0,0,0,0))
 plot.contours.kde <- function(data, bandwidth.matrix, name) {
+  
   # Event Density evaluated at points
   event.dens <- kde(x=data, H=bandwidth.matrix, eval.points=xymatrix)
   cont.ests <- matrix(event.dens$estimate,nrow=100)
@@ -204,66 +156,27 @@ plot.contours.kde <- function(data, bandwidth.matrix, name) {
   dev.off()
 }
 
-## All data
-# Plug-In
-plot.contours.kde(data=acled.drc2014.latlon, bandwidth.matrix=bandwidth.Hpi, name="AllDataPI")
-
-# LSCV
-plot.contours.kde(data=acled.drc2014.latlon, bandwidth.matrix=bandwidth.Hlscv, name="AllDataLSCV")
-
-# LSCV + Random Noise
-plot.contours.kde(data=acled.drc2014.latlon.RN, bandwidth.matrix=bandwidth.Hlscv.RN, name="AllDataLSCVRN")
-
-# BCV1
-plot.contours.kde(data=acled.drc2014.latlon, bandwidth.matrix=bandwidth.Hbcv1, name="AllDataBCV1")
-
-# NS
-plot.contours.kde(data=acled.drc2014.latlon, bandwidth.matrix=bandwidth.Hns, name="AllDataNS")
-
-## Battles
-# Plug-In
-plot.contours.kde(data=acled.drc2014.b.latlon, bandwidth.matrix=bandwidth.b.Hpi, name="BattlesPI")
-
-# LSCV
-plot.contours.kde(data=acled.drc2014.b.latlon, bandwidth.matrix=bandwidth.b.Hlscv, name="BattlesLSCV")
-
-# LSCV + Random Noise
-plot.contours.kde(data=acled.drc2014.b.latlon.RN, bandwidth.matrix=bandwidth.b.Hlscv.RN, name="BattlesLSCVRN")
-
-# BCV1
-plot.contours.kde(data=acled.drc2014.b.latlon, bandwidth.matrix=bandwidth.b.Hbcv1, name="BattlesBCV1")
-
-# NS
-plot.contours.kde(data=acled.drc2014.b.latlon, bandwidth.matrix=bandwidth.b.Hns, name="BattlesNS")
-
-## Riots
-# Plug-In
-plot.contours.kde(data=acled.drc2014.r.latlon, bandwidth.matrix=bandwidth.r.Hpi, name="RiotsPI")
-
-# LSCV
-plot.contours.kde(data=acled.drc2014.r.latlon, bandwidth.matrix=bandwidth.r.Hlscv, name="RiotsLSCV")
-
-# LSCV + Random Noise
-plot.contours.kde(data=acled.drc2014.r.latlon.RN, bandwidth.matrix=bandwidth.r.Hlscv.RN, name="RiotsLSCVRN")
-
-# BCV1
-plot.contours.kde(data=acled.drc2014.r.latlon, bandwidth.matrix=bandwidth.r.Hbcv1, name="RiotsBCV1")
-
-# NS
-plot.contours.kde(data=acled.drc2014.r.latlon, bandwidth.matrix=bandwidth.r.Hns, name="RiotsNS")
-
-## Violence Against Civilians
-# Plug-In
-plot.contours.kde(data=acled.drc2014.v.latlon, bandwidth.matrix=bandwidth.v.Hpi, name="VACPI")
-
-# LSCV
-plot.contours.kde(data=acled.drc2014.v.latlon, bandwidth.matrix=bandwidth.v.Hlscv, name="VACLSCV")
-
-# LSCV + Random Noise
-plot.contours.kde(data=acled.drc2014.v.latlon.RN, bandwidth.matrix=bandwidth.v.Hlscv.RN, name="VACLSCVRN")
-
-# BCV1
-plot.contours.kde(data=acled.drc2014.v.latlon, bandwidth.matrix=bandwidth.v.Hbcv1, name="VACBCV1")
-
-# NS
-plot.contours.kde(data=acled.drc2014.r.latlon, bandwidth.matrix=bandwidth.v.Hns, name="VACNS")
+## Loop Through Event Subsets & Bandwidth Types
+## Generate Contour Plots for Each Combination
+for (j in 1:length(eventlist)) {
+  for (i in 1:length(bwlist)) {
+    
+    # Get Bandwidth Matrix
+    bwmatrix <- get(paste0("bandwidth",eventlist[j],bwlist[i]))
+    
+    # If Bandwidth is LSCV-R, Get Adjusted Data
+    # Otherwise, Get Regular Data
+    if (bwlist[i] == "Hlscv.RN") {
+      df <- get(paste0("acled.drc2014",eventlist[j],"latlon.RN"))
+    }
+    else {
+      df <- get(paste0("acled.drc2014",eventlist[j],"latlon"))
+    }
+    
+    # Make File Name
+    savename <- paste0(eventlist.names[j],bwlist.names[i])
+    
+    # Contour Plot
+    plot.contours.kde(data=df, bandwidth.matrix=bwmatrix, name=savename)
+  }
+}

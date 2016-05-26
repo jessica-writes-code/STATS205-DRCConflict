@@ -36,9 +36,10 @@ acled.drc <- subset(acled.drc, acled.drc$EVENT_TYPE!="Non-violent transfer of te
 # Categorize event types
 acled.drc$event_type_std <- as.character(acled.drc$EVENT_TYPE)
 acled.drc$event_type_std[acled.drc$EVENT_TYPE=="Battle-Government regains territory" | acled.drc$EVENT_TYPE=="Battle-No change of territory" | acled.drc$EVENT_TYPE=="Battle-Non-state actor overtakes territory"] <- "Battle"
+acled.drc$event_type_std <- as.factor(acled.drc$event_type_std)
 
 ### DRC
-## Grid Africa
+## Grid DRC
 grid <- raster(extent(drc))
 res(grid) <- .1
 proj4string(grid) <- proj4string(drc)

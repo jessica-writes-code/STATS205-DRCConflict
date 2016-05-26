@@ -15,11 +15,30 @@ input <- file.path(".", "Input")
 output <- file.path(".", "Output")
 temp <- file.path(".", "Temp")
 
+### Create/Load Important Objects
+# List Event Subsets & Labels
+eventlist <- c(".", ".b.", ".r.", ".v.")
+eventlist.names <- c("AllData", "Battles", "Riots", "VAC")
+
+# List Bandwidths & Labels
+bwlist <- c("Hpi", "Hlscv", "Hlscv.RN", "Hbcv1", "Hbcv2", "Hns")
+bwlist.names <- c("PI","LSCV","LSCVRN", "BCV1", "BCV2","NS")
+
 # Load data
 load(file=paste0(temp,"/drc.R"))
 load(file=paste0(temp,"/drcgrid.R"))
 load(file=paste0(temp,"/acleddrc.R"))
 load(file=paste0(temp,"/drcgridcentroids.R"))
+
+for (j in 1:length(eventlist)) {
+  for (i in 1:length(bwlist)) {
+  
+    load(file=paste0(temp,"/Estimates",eventlist.names[j],bwlist[i],".R"))
+    dens.name <- paste0("estimates",eventlist[j],bwlist[i])
+    assign(dens.name, dens.df)
+  
+  }
+}
 
 ### Count 2015 Events by Grid Square
 # Subset data
@@ -108,73 +127,40 @@ calc.auc <- function(dataforauc) {
 }
 
 ## Function to combine the above
-results.surveillance <- function(pointsbygridID, estimates.pi, estimates.lscv, estimates.lscv.RN, estimates.bcv, estimates.ns, name) {
+results.surveillance <- function(pointsbygridID, estimates.pi, estimates.lscv, estimates.lscv.RN, estimates.bcv1, estimates.bcv2, estimates.ns, name) {
   
   # Change data to surveillance plot format
   data.pi <- data.surveillance(pointsbygridID,estimates.pi)
   data.lscv <- data.surveillance(pointsbygridID,estimates.lscv)
   data.lscv.RN <- data.surveillance(pointsbygridID,estimates.lscv.RN)
-  data.bcv <- data.surveillance(pointsbygridID,estimates.bcv)
+  data.bcv1 <- data.surveillance(pointsbygridID,estimates.bcv1)
+  data.bcv2 <- data.surveillance(pointsbygridID,estimates.bcv2)
   data.ns <- data.surveillance(pointsbygridID,estimates.ns)
   
   # Plot
-  plot.surveillance(data.pi, data.lscv, data.lscv.RN, data.bcv, data.ns,name)
+  plot.surveillance(data.pi, data.lscv, data.lscv.RN, data.bcv1, data.ns, name)
   
   # AUC Calculation
   pi.auc <- calc.auc(data.pi)
   lscv.auc <- calc.auc(data.lscv)
   lscv.auc.RN <- calc.auc(data.lscv.RN)
-  bcv1.auc <- calc.auc(data.bcv)
+  bcv1.auc <- calc.auc(data.bcv1)
+  bcv2.auc <- calc.auc(data.bcv2)
   ns.auc <- calc.auc(data.ns)
-  aucs <- c(pi.auc,lscv.auc,lscv.auc.RN,bcv1.auc,ns.auc)
+  aucs <- c(pi.auc,lscv.auc,lscv.auc.RN,bcv1.auc,bcv2.auc,ns.auc)
   return(aucs)
 }
 
-## All Data
-# Load data
-load(file=paste0(temp,"/EstimatesAllPI.R"))
-load(file=paste0(temp,"/EstimatesAllLSCV.R"))
-load(file=paste0(temp,"/EstimatesAllLSCVRN.R"))
-load(file=paste0(temp,"/EstimatesAllBCV1.R"))
-load(file=paste0(temp,"/EstimatesAllNS.R"))
+## Create Surveilland Plots & Perform AUC Calculations
+all.auc <- results.surveillance(points.all, estimates.Hpi, estimates.Hlscv, estimates.Hlscv.RN, estimates.Hbcv1, estimates.Hbcv2, estimates.Hns, "AllData")
 
-# Surveillance Plot & AUC Calculation
-all.auc <- results.surveillance(points.all, estimates.all.pi, estimates.all.lscv, estimates.all.lscv.RN, estimates.all.bcv1, estimates.all.ns, "AllData")
+battles.auc <- results.surveillance(points.all, estimates.b.Hpi, estimates.b.Hlscv, estimates.b.Hlscv.RN, estimates.b.Hbcv1, estimates.b.Hbcv2, estimates.b.Hns, "Battles")
 
-## Battles
-# Load data
-load(file=paste0(temp,"/EstimatesBattlesPI.R"))
-load(file=paste0(temp,"/EstimatesBattlesLSCV.R"))
-load(file=paste0(temp,"/EstimatesBattlesLSCVRN.R"))
-load(file=paste0(temp,"/EstimatesBattlesBCV1.R"))
-load(file=paste0(temp,"/EstimatesBattlesNS.R"))
+riots.auc <- results.surveillance(points.all, estimates.r.Hpi, estimates.r.Hlscv, estimates.r.Hlscv.RN, estimates.r.Hbcv1, estimates.r.Hbcv2, estimates.r.Hns, "Riots")
 
-# Surveillance Plot & AUC Calculation
-battles.auc <- results.surveillance(points.all, estimates.b.pi, estimates.b.lscv, estimates.b.lscv.RN, estimates.b.bcv1, estimates.b.ns, "Battles")
-
-## Riots
-# Load data
-load(file=paste0(temp,"/EstimatesRiotsPI.R"))
-load(file=paste0(temp,"/EstimatesRiotsLSCV.R"))
-load(file=paste0(temp,"/EstimatesRiotsLSCVRN.R"))
-load(file=paste0(temp,"/EstimatesRiotsBCV1.R"))
-load(file=paste0(temp,"/EstimatesRiotsNS.R"))
-
-# Surveillance Plot & AUC Calculation
-riots.auc <- results.surveillance(points.all, estimates.r.pi, estimates.r.lscv, estimates.r.lscv.RN, estimates.r.bcv1, estimates.r.ns, "Riots")
-
-## Violence Against Civilians
-# Load data
-load(file=paste0(temp,"/EstimatesVACPI.R"))
-load(file=paste0(temp,"/EstimatesVACLSCV.R"))
-load(file=paste0(temp,"/EstimatesVACLSCVRN.R"))
-load(file=paste0(temp,"/EstimatesVACBCV1.R"))
-load(file=paste0(temp,"/EstimatesVACNS.R"))
-
-# Surveillance Plot & AUC Calculation
-vac.auc <- results.surveillance(points.all, estimates.v.pi, estimates.v.lscv, estimates.v.lscv.RN, estimates.v.bcv1, estimates.v.ns, "VAC")
+vac.auc <- results.surveillance(points.all, estimates.v.Hpi, estimates.v.Hlscv, estimates.v.Hlscv.RN, estimates.v.Hbcv1, estimates.v.Hbcv2, estimates.v.Hns, "VAC")
 
 ### Combine AUC Calculations & Save
 combined.auc <- rbind(all.auc, battles.auc, riots.auc, vac.auc)
-colnames(combined.auc) <- c("Plug-In","LSCV","LSCVRN","BCV2","NS")
-write.xlsx(combined.auc, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="AUC", col.names=TRUE, row.names=TRUE, append=TRUE)
+colnames(combined.auc) <- c("Plug-In","LSCV","LSCVRN","BCV1","BCV2","NS")
+write.xlsx(combined.auc, file=paste0(output,"/AUC Calculations.xlsx"), sheetName="AUC", col.names=TRUE, row.names=TRUE, append=FALSE)

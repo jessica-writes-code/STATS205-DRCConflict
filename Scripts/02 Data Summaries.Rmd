@@ -73,82 +73,63 @@ legend(2011.5, 575, c("Battles","Riots/Protests","Violence Against Civilians"), 
 par(xpd=FALSE)
 dev.off()
 
-### Visual Summaries
-par(mar=c(1,1,1,2))
+### Conflict Maps
+## Function to create conflict maps
+map.conf <- function(picname, df, color) {
+  
+  png(paste0(output,'/',picname,'.png'))
+  par(mar=c(1,1,1,2))
+  plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
+  plot(df, pch=20, cex=.25, add=TRUE, col = color)
+  dev.off()
+
+}
 
 ## All Conflicts
+# Subset data
 acled.drc2014 <- subset(acled.drc, YEAR==2014)
 acled.drc2015 <- subset(acled.drc, YEAR==2015)
 
-# 2014
-png(paste0(output,'/AllConflicts2014.png'))
-plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
-plot(acled.drc2014, pch=20, cex=.25, add=TRUE)
-dev.off()
+# Create maps
+map.conf("AllConflicts2014",acled.drc2014, "black")
+map.conf("AllConflicts2015",acled.drc2015, "black")
 
-# 2015
-png(paste0(output,'/AllConflicts2015.png'))
-plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
-plot(acled.drc2015, pch=20, cex=.25, add=TRUE)
-dev.off()
+# Save data subsetting
+save(acled.drc2014, file=paste0(temp,"/acled.drc2014.R"))
+save(acled.drc2015, file=paste0(temp,"/acled.drc2015.R"))
 
 ## Battles
 acled.drc2014.battles <- subset(acled.drc2014, event_type_std=="Battle")
 acled.drc2015.battles <- subset(acled.drc2015, event_type_std=="Battle")
 
-# 2014
-png(paste0(output,'/Battles2014.png'))
-plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
-plot(acled.drc2014.battles, pch=20, cex=.25, add=TRUE, col="red")
-dev.off()
+# Create maps
+map.conf("Battles2014",acled.drc2014.battles, "red")
+map.conf("Battles2015",acled.drc2015.battles, "red")
 
-# 2015
-png(paste0(output,'/Battles2015.png'))
-plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
-plot(acled.drc2015.battles, pch=20, cex=.25, add=TRUE, col="red")
-dev.off()
+# Save data subsetting
+save(acled.drc2014.battles, file=paste0(temp,"/acleddrc2014battles.R"))
+save(acled.drc2015.battles, file=paste0(temp,"/acleddrc2015battles.R"))
+
+## Violence Against Civilians
+acled.drc2014.vac <- subset(acled.drc2014, event_type_std=="Violence against civilians")
+acled.drc2015.vac <- subset(acled.drc2015, event_type_std=="Violence against civilians")
+
+# Create maps
+map.conf("VAC2014",acled.drc2014.vac, "green")
+map.conf("VAC2015",acled.drc2015.vac, "green")
+
+# Save data subsetting
+save(acled.drc2014.vac, file=paste0(temp,"/acleddrc2014vac.R"))
+save(acled.drc2015.vac, file=paste0(temp,"/acleddrc2015vac.R"))
 
 ## Riots/Protests
 acled.drc2014.riots <- subset(acled.drc2014, event_type_std=="Riots/Protests")
 acled.drc2015.riots <- subset(acled.drc2015, event_type_std=="Riots/Protests")
 
-# 2014
-png(paste0(output,'/Riots2014.png'))
-plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
-plot(acled.drc2014.riots, pch=20, cex=.25, add=TRUE, col="blue")
-dev.off()
+# Create maps
+map.conf("Riots2014",acled.drc2014.riots, "blue")
+map.conf("Riots2015",acled.drc2015.riots, "blue")
 
-# 2015
-png(paste0(output,'/Riots2015.png'))
-plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
-plot(acled.drc2015.riots, pch=20, cex=.25, add=TRUE, col="blue")
-dev.off()
-
-## Violence against civilians
-acled.drc2014.vac <- subset(acled.drc2014, event_type_std=="Violence against civilians")
-acled.drc2015.vac <- subset(acled.drc2015, event_type_std=="Violence against civilians")
-
-# 2014
-png(paste0(output,'/VAC2014.png'))
-plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
-plot(acled.drc2014.vac, pch=20, cex=.25, add=TRUE, col="green")
-dev.off()
-
-# 2015
-png(paste0(output,'/VAC2015.png'))
-plot(drc, xlim=c(21,21.025), ylim=c(-13,6))
-plot(acled.drc2015.vac, pch=20, cex=.25, add=TRUE, col="green")
-dev.off()
-
-### Saving
-save(acled.drc2014, file=paste0(temp,"/acled.drc2014.R"))
-save(acled.drc2015, file=paste0(temp,"/acled.drc2015.R"))
-
-save(acled.drc2014.battles, file=paste0(temp,"/acleddrc2014battles.R"))
-save(acled.drc2015.battles, file=paste0(temp,"/acleddrc2015battles.R"))
-
+# Save data subsetting
 save(acled.drc2014.riots, file=paste0(temp,"/acleddrc2014riots.R"))
 save(acled.drc2015.riots, file=paste0(temp,"/acleddrc2015riots.R"))
-
-save(acled.drc2014.vac, file=paste0(temp,"/acleddrc2014vac.R"))
-save(acled.drc2015.vac, file=paste0(temp,"/acleddrc2015vac.R"))
