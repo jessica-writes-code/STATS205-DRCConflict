@@ -5,7 +5,7 @@ A few important notes:
 
 **Input**
 
-> In order to save space, we have created a zip file of the input we used. The “Input.zip” file in the “Input” folder must be unzipped in order for the code in this repository to run.
+> In order to save space, I created a zip file of the data I used. The “Input.zip” file in the “Input” folder must be unzipped in order for the code in this repository to run.
 
 > The files in the folder “DRC Outlines” are the shape file and associated support that allow the creation of the outline of the DRC. They were acquired from GADM’s website, located at http://www.gadm.org/country.
 
