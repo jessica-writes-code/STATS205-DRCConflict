@@ -1,7 +1,7 @@
 # STATS205-DRCConflict
 Final project for STATS205: Nonparametric Statistics
 
-> The purpose of this project was to assess whether kernel density estimation could be used to effectively predict the locations of conflicts in the Democratic Republic of the Congo. I evaluated kernel density estimates using a number of different kernel bandwidth selection methods and ultimately concluded that KDE is a potentially effective technique for this purpose. See "STATS205-Proposal.pdf" for the project proposal and "STATS205-KDE in the DRC.pdf" for the full report.
+> The purpose of this project was to assess whether kernel density estimation could be used to effectively predict the locations of conflicts in the Democratic Republic of the Congo. I built and evaluated kernel density estimates that used a number of different bandwidth selection methods. I ultimately concluded that KDE is a potentially effective technique for this purpose. See "STATS205-Proposal.pdf" for the project proposal and "STATS205-KDE in the DRC.pdf" for the full report.
 
 A few important notes:
 
